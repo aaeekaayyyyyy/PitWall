@@ -4,6 +4,9 @@ src/f1_strategy/__init__.py
 src/f1_strategy/config/__init__.py
 src/f1_strategy/config/settings.py
 src/f1_strategy/db/__init__.py
+src/f1_strategy/db/engine.py
+src/f1_strategy/db/init_db.py
+src/f1_strategy/db/models.py
 src/f1_strategy/ingestion/__init__.py
 src/f1_strategy/metadata/__init__.py
 src/f1_strategy/pipelines/__init__.py
