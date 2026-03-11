@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Melbourne",
+    "country": "Australia",
+    "location": "Melbourne",
+    "latitude": -37.8494,
+    "longitude": 144.968,
+    "track_length_m": 5303,
+    "corner_count": 14
+  },
+  {
+    "name": "Monza",
+    "country": "Italy",
+    "location": "Monza",
+    "latitude": 45.6156,
+    "longitude": 9.28111,
+    "track_length_m": 5793,
+    "corner_count": 11
+  }
+]

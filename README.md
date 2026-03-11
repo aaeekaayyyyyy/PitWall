@@ -56,3 +56,24 @@ Or install the package in editable mode first, then use the module:
 pip install -e .
 python -m f1_strategy.db.init_db
 ```
+
+### Ingest a weekend session
+
+After tables exist, run the Prefect flow to fetch one session (circuit, session, laps, weather) and run quality checks:
+
+```bash
+python run_ingest.py 2024 1 R
+```
+
+Or from Python:
+
+```python
+from f1_strategy.pipelines import ingest_weekend_session
+ingest_weekend_session(year=2024, round=1, session_type="R")
+```
+
+Optional: set `OPENWEATHERMAP_API_KEY` in `.env` for weather; copy `data/circuits_seed.example.json` to `data/circuits_seed.json` to preload circuit metadata (e.g. lat/lon for weather).
+
+### Data dictionary and env vars
+
+See [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) for table schemas, ingestion env vars, and pipeline steps.
