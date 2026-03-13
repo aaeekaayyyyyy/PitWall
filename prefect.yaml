@@ -1,0 +1,16 @@
+# Prefect 3 deployment config. Use for scheduled ingest.
+# Run from project root with venv activated. Requires Postgres and .env.
+
+name: f1-strategy-ingest
+prefect-version: ">=3.0.0"
+
+deployments:
+  - name: scheduled-weekend-ingest
+    entrypoint: src/f1_strategy/pipelines/ingest_flow.py:scheduled_ingest_weekend
+    schedule:
+      cron: "0 */6 * * *"   # Every 6 hours (approximate "within 2 hours of session end" during race weekends)
+      timezone: "UTC"
+    parameters:
+      year: 2024
+      round: 1
+    description: "Ingest full weekend (FP1, FP2, FP3, Q, R) for the configured year/round. Update parameters per race calendar."

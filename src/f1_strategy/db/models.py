@@ -13,6 +13,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -74,6 +75,9 @@ class Session(Base):
     laps: Mapped[list["Lap"]] = relationship("Lap", back_populates="session")
     weather: Mapped[list["Weather"]] = relationship("Weather", back_populates="session")
     results: Mapped[list["Result"]] = relationship("Result", back_populates="session")
+    telemetry_snapshots: Mapped[list["TelemetrySnapshot"]] = relationship(
+        "TelemetrySnapshot", back_populates="session"
+    )
 
 
 class Lap(Base):
@@ -138,3 +142,22 @@ class Result(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     session: Mapped["Session"] = relationship("Session", back_populates="results")
+
+
+class TelemetrySnapshot(Base):
+    """Sampled telemetry for a lap (session_id, driver, lap, timestamp + optional blob)."""
+
+    __tablename__ = "telemetry_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    session_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    driver_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    lap_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    timestamp_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    sample_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+    session: Mapped["Session"] = relationship("Session", back_populates="telemetry_snapshots")

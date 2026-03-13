@@ -2,12 +2,15 @@
 
 Foundational scaffolding for the F1 2026 Race Strategy Intelligence Platform.
 
-## Week 1 Scope
+## Week 1 (complete)
 
-- Project folder structure
-- Local Python virtual environment
-- Dependency management
-- Environment-based configuration handling
+- Project structure, Python env, dependency management, config (.env)
+- PostgreSQL schema: circuits, sessions, laps, weather, results, telemetry_snapshots
+- Data ingestion: FastF1 session + laps, circuit metadata (FastF1 + seed JSON), weather (OpenWeatherMap)
+- Full weekend ingest: FP1, FP2, FP3, Q, R (and optional Sprint) for a given year + round
+- Data quality checks (missing/duplicate lap numbers, null lap times, outliers, wet-session flag)
+- Prefect flows: single-session and full-weekend; optional scheduled run (cron)
+- Data dictionary and ingestion env vars documented
 
 ## Quick Start
 
@@ -57,22 +60,50 @@ pip install -e .
 python -m f1_strategy.db.init_db
 ```
 
-### Ingest a weekend session
+### Load circuit seed (for weather)
 
-After tables exist, run the Prefect flow to fetch one session (circuit, session, laps, weather) and run quality checks:
+Weather needs circuit latitude/longitude. Preload circuits from the example seed so ingest can fetch weather:
 
 ```bash
-python run_ingest.py 2024 1 R
+cp data/circuits_seed.example.json data/circuits_seed.json
+python run_seed_circuits.py
+```
+
+Or pass a path: `python run_seed_circuits.py data/circuits_seed.json`. Run this once (or when you add circuits); the ingest flow will reuse existing circuits and keep their lat/lon.
+
+### Ingest a weekend
+
+After tables exist (and optionally after loading the circuit seed):
+
+**Full weekend (all session types: FP1, FP2, FP3, Q, R):**
+
+```bash
+python run_ingest.py 2026 1
+```
+
+**Single session (e.g. Race only):**
+
+```bash
+python run_ingest.py 2026 1 R
 ```
 
 Or from Python:
 
 ```python
-from f1_strategy.pipelines import ingest_weekend_session
-ingest_weekend_session(year=2024, round=1, session_type="R")
+from f1_strategy.pipelines import ingest_full_weekend, ingest_weekend_session
+ingest_full_weekend(year=2026, round=1)
+ingest_weekend_session(year=2026, round=1, session_type="R")
 ```
 
-Optional: set `OPENWEATHERMAP_API_KEY` in `.env` for weather; copy `data/circuits_seed.example.json` to `data/circuits_seed.json` to preload circuit metadata (e.g. lat/lon for weather).
+Set `OPENWEATHERMAP_API_KEY` in `.env` for weather. Load the circuit seed (see above) so circuits have lat/lon.
+
+### Scheduled run (optional)
+
+To run ingest automatically (e.g. every 6 hours during the season), use Prefect with a schedule. Ensure Postgres is running and `.env` is set.
+
+1. From project root with venv activated and package on path (`pip install -e .` or `PYTHONPATH=src`): `prefect deploy` (uses `prefect.yaml`; edit `parameters.year` and `parameters.round` per race calendar).
+2. Start a worker: `prefect worker start` (or run a Prefect server and register the deployment).
+3. The deployment `scheduled-weekend-ingest` runs `scheduled_ingest_weekend` on the cron in `prefect.yaml`. Update the cron or parameters as needed.
 
 ### Data dictionary and env vars
 
