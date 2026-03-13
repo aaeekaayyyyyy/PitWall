@@ -1,5 +1,7 @@
 # Data dictionary & ingestion
 
+**Week 1** is complete: full weekend ingest (FP1, FP2, FP3, Q, R), quality checks, manual and optional scheduled run, and the schema below (including `telemetry_snapshots`).
+
 ## Database tables
 
 ### `circuits`
@@ -69,6 +71,18 @@
 | status        | VARCHAR   | e.g. Finished, +1 Lap (nullable). |
 | created_at    | TIMESTAMPTZ | Row creation time.          |
 
+### `telemetry_snapshots`
+| Column         | Type      | Description                              |
+|----------------|-----------|------------------------------------------|
+| id             | SERIAL PK | Auto-increment id.                       |
+| session_id     | INTEGER FK| References `sessions.id`.               |
+| driver_number  | INTEGER   | F1 driver number.                        |
+| lap_number     | INTEGER   | Lap index.                               |
+| timestamp_utc   | TIMESTAMPTZ | Sample time.                          |
+| sample_key     | VARCHAR   | Optional key (e.g. sector, corner).      |
+| payload_json   | TEXT      | Optional JSON blob of sampled telemetry. |
+| created_at     | TIMESTAMPTZ | Row creation time.                    |
+
 ---
 
 ## Environment variables (ingestion)
@@ -104,9 +118,16 @@
 
 ## Running the pipeline
 
-- **Prefect flow (manual):**  
-  `ingest_weekend_session(year=2024, round=1, session_type="R")`  
-  Run from Python or Prefect CLI.
+- **Full weekend (all session types):**  
+  `python run_ingest.py 2026 1`  
+  Or: `ingest_full_weekend(year=2026, round=1)` from `f1_strategy.pipelines`.
+
+- **Single session:**  
+  `python run_ingest.py 2026 1 R`  
+  Or: `ingest_weekend_session(year=2026, round=1, session_type="R")`.
+
+- **Scheduled run (optional):**  
+  Use `prefect deploy` (see `prefect.yaml`) and run a Prefect worker. Deployment `scheduled-weekend-ingest` runs on a cron (e.g. every 6 hours). Ensure Postgres and `.env` are set.
 
 - **One-off session + laps:**  
   Use `fetch_and_insert_session(db, year, round, session_type)` from `f1_strategy.ingestion`.

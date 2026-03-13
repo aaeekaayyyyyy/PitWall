@@ -73,14 +73,16 @@ def fetch_and_insert_session(
     if not isinstance(session_date, date):
         session_date = date(session_date.year, session_date.month, session_date.day)
 
-    stype = _session_type_name(f1_session)
+    # Use caller-provided session_type for DB so each session type gets its own record.
+    # (FastF1 session_name can be missing or inconsistent; do not use _session_type_name for lookup.)
+    db_session_type = session_type
     existing = (
         db.query(DBSession)
         .filter(
             DBSession.circuit_id == circuit.id,
             DBSession.season == year,
             DBSession.round == round,
-            DBSession.session_type == stype,
+            DBSession.session_type == db_session_type,
         )
         .first()
     )
@@ -93,7 +95,7 @@ def fetch_and_insert_session(
             circuit_id=circuit.id,
             season=year,
             round=round,
-            session_type=stype,
+            session_type=db_session_type,
             session_date=session_date,
         )
         db.add(db_session)
